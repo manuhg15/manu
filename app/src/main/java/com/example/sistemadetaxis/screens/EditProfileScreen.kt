@@ -1,7 +1,7 @@
 package com.example.sistemadetaxis.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.* 
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -13,17 +13,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.sistemadetaxis.data.DataSource
+import com.example.sistemadetaxis.data.TaxiDriver
+import com.example.sistemadetaxis.data.Passenger
+import com.example.sistemadetaxis.data.UserRole
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RegistrationScreen(
-    role: String,
-    onRegisterSuccess: () -> Unit,
-    onBackClick: () -> Unit
+fun EditProfileScreen(
+    userId: String,
+    userRole: UserRole,
+    onBackClick: () -> Unit,
+    onSaveClick: () -> Unit
 ) {
+    val user = when (userRole) {
+        UserRole.PASSENGER -> DataSource.getPassenger(userId)
+        UserRole.DRIVER -> DataSource.getDriver(userId)
+    }
+
     var firstName by remember { mutableStateOf("") }
     var paternalLastName by remember { mutableStateOf("") }
     var maternalLastName by remember { mutableStateOf("") }
@@ -31,7 +39,6 @@ fun RegistrationScreen(
     var isEmailError by remember { mutableStateOf(false) }
     var phone by remember { mutableStateOf("") }
     var isPhoneError by remember { mutableStateOf(false) }
-    var password by remember { mutableStateOf("") }
     var mainZone by remember { mutableStateOf("") }
     var vehicleType by remember { mutableStateOf("") }
     var taxiNumber by remember { mutableStateOf("") }
@@ -40,7 +47,29 @@ fun RegistrationScreen(
     val zones = listOf("Centro", "San Sebastián", "Santa Anita", "La Trinidad", "El Carmen", "Guadalupe", "San Francisco Yancuitlalpan", "San José Xicohténcatl")
     var expanded by remember { mutableStateOf(false) }
 
-    val roleName = if (role == "passenger") "Pasajero" else "Taxista"
+    LaunchedEffect(user) {
+        if (user != null) {
+            val currentName = when (user) {
+                is Passenger -> user.name
+                is TaxiDriver -> user.name
+                else -> ""
+            }
+            val nameParts = currentName.split(" ")
+            firstName = nameParts.getOrNull(0) ?: ""
+            paternalLastName = nameParts.getOrNull(1) ?: ""
+            maternalLastName = nameParts.getOrNull(2) ?: ""
+            if (user is Passenger) {
+                email = user.email
+                mainZone = user.mainZone
+            }
+            if (user is TaxiDriver) {
+                phone = user.phoneNumber
+                vehicleType = user.vehicleType
+                taxiNumber = user.taxiNumber
+                licensePlate = user.licensePlate
+            }
+        }
+    }
 
     fun validateEmail(email: String): Boolean {
         return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
@@ -53,7 +82,7 @@ fun RegistrationScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Registro de $roleName") },
+                title = { Text("Editar Perfil") },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar")
@@ -80,7 +109,7 @@ fun RegistrationScreen(
             OutlinedTextField(value = maternalLastName, onValueChange = { maternalLastName = it }, label = { Text("Apellido Materno") }, modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(16.dp))
 
-            if (role == "passenger") {
+            if (userRole == UserRole.PASSENGER) {
                 OutlinedTextField(
                     value = email, 
                     onValueChange = { 
@@ -146,29 +175,27 @@ fun RegistrationScreen(
                 OutlinedTextField(value = licensePlate, onValueChange = { licensePlate = it }, label = { Text("Placa") }, modifier = Modifier.fillMaxWidth())
             }
 
-            Spacer(Modifier.height(16.dp))
-            OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text("Contraseña") }, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(32.dp))
 
             Button(
                 onClick = {
                     val fullName = "$firstName $paternalLastName $maternalLastName"
-                    if (role == "passenger") {
+                    if (userRole == UserRole.PASSENGER) {
                         if (!isEmailError && mainZone.isNotEmpty()) {
-                            DataSource.registerPassenger(fullName, email, mainZone, password)
-                            onRegisterSuccess()
+                            DataSource.updatePassenger(userId, fullName, email, mainZone)
+                            onSaveClick()
                         }
                     } else {
                         if (!isPhoneError) {
-                            DataSource.registerDriver(fullName, phone, vehicleType, taxiNumber, licensePlate, password)
-                            onRegisterSuccess()
+                            DataSource.updateDriver(userId, fullName, phone, vehicleType, taxiNumber, licensePlate)
+                            onSaveClick()
                         }
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = if (role == "passenger") !isEmailError && mainZone.isNotEmpty() else !isPhoneError
+                enabled = if (userRole == UserRole.PASSENGER) !isEmailError && mainZone.isNotEmpty() else !isPhoneError
             ) {
-                Text("Registrarse")
+                Text("Guardar Cambios")
             }
         }
     }

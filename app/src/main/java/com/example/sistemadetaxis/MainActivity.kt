@@ -159,7 +159,11 @@ fun TaxiApp() {
                 AdminLoginScreen(onAdminLoginSuccess = { navController.navigate("admin_dashboard") })
             }
             composable("admin_dashboard") {
-                AdminDashboardScreen(onLogout = { navController.navigate("home") })
+                AdminDashboardScreen(
+                    onLogout = { navController.navigate("home") },
+                    onAddPassenger = { navController.navigate("register/passenger") },
+                    onAddDriver = { navController.navigate("register/driver") }
+                )
             }
 
             composable("auth_choice/{role}", arguments = listOf(navArgument("role") { type = NavType.StringType })) { backStack ->
@@ -173,7 +177,11 @@ fun TaxiApp() {
 
             composable("register/{role}", arguments = listOf(navArgument("role") { type = NavType.StringType })) { backStack ->
                 val role = backStack.arguments?.getString("role")!!
-                RegistrationScreen(role = role, onRegisterSuccess = { navController.navigate("sign_in/$role") }, onBackClick = { navController.popBackStack() })
+                RegistrationScreen(
+                    role = role, 
+                    onRegisterSuccess = { navController.popBackStack() }, 
+                    onBackClick = { navController.popBackStack() }
+                )
             }
 
             composable("sign_in/{role}", arguments = listOf(navArgument("role") { type = NavType.StringType })) { backStack ->
@@ -190,10 +198,32 @@ fun TaxiApp() {
 
             composable("profile") {
                 if (loggedInUserId != null && currentUserRole != null) {
-                    ProfileScreen(userId = loggedInUserId!!, userRole = currentUserRole!!, onBackClick = { navController.popBackStack() })
+                    ProfileScreen(
+                        userId = loggedInUserId!!, 
+                        userRole = currentUserRole!!, 
+                        onBackClick = { navController.popBackStack() },
+                        onEditProfile = { userId, userRole -> navController.navigate("edit_profile/$userId/${userRole.name}") }
+                    )
                 }
             }
             
+            composable(
+                "edit_profile/{userId}/{userRole}",
+                arguments = listOf(
+                    navArgument("userId") { type = NavType.StringType },
+                    navArgument("userRole") { type = NavType.StringType }
+                )
+            ) {
+                val userId = it.arguments?.getString("userId")!!
+                val userRole = UserRole.valueOf(it.arguments?.getString("userRole")!!)
+                EditProfileScreen(
+                    userId = userId,
+                    userRole = userRole,
+                    onBackClick = { navController.popBackStack() },
+                    onSaveClick = { navController.popBackStack() }
+                )
+            }
+
             composable("main_content") {
                 MainContentScreen(
                     currentUserRole = currentUserRole,

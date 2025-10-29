@@ -10,6 +10,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.sistemadetaxis.data.DataSource
+import com.example.sistemadetaxis.data.Passenger
+import com.example.sistemadetaxis.data.TaxiDriver
 import com.example.sistemadetaxis.data.UserRole
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -17,7 +19,8 @@ import com.example.sistemadetaxis.data.UserRole
 fun ProfileScreen(
     userId: String,
     userRole: UserRole,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onEditProfile: (String, UserRole) -> Unit
 ) {
     val user: Any? = when (userRole) {
         UserRole.PASSENGER -> DataSource.findPassengerById(userId)
@@ -48,17 +51,21 @@ fun ProfileScreen(
                 .padding(16.dp)
         ) {
             when (user) {
-                is com.example.sistemadetaxis.data.Passenger -> {
+                is Passenger -> {
                     Text("Nombre: ${user.name}", fontSize = 20.sp, fontWeight = FontWeight.Bold)
                     Text("Correo: ${user.email}", fontSize = 16.sp)
                     Text("Zona Principal: ${user.mainZone}", fontSize = 16.sp)
                 }
-                is com.example.sistemadetaxis.data.TaxiDriver -> {
+                is TaxiDriver -> {
                     Text("Nombre: ${user.name}", fontSize = 20.sp, fontWeight = FontWeight.Bold)
                     Text("Teléfono: ${user.phoneNumber}", fontSize = 16.sp)
                     Text("Vehículo: ${user.vehicleType} (#${user.taxiNumber})", fontSize = 16.sp)
                     Text("Placa: ${user.licensePlate}", fontSize = 16.sp)
                 }
+            }
+            Spacer(modifier = Modifier.height(32.dp))
+            Button(onClick = { onEditProfile(userId, userRole) }) {
+                Text("Editar Perfil")
             }
         }
     }

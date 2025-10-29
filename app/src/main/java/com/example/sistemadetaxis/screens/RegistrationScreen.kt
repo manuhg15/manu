@@ -3,6 +3,7 @@ package com.example.sistemadetaxis.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -11,7 +12,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -41,6 +45,7 @@ fun RegistrationScreen(
     var expanded by remember { mutableStateOf(false) }
 
     val roleName = if (role == "passenger") "Pasajero" else "Taxista"
+    val focusManager = LocalFocusManager.current
 
     fun validateEmail(email: String): Boolean {
         return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
@@ -73,24 +78,51 @@ fun RegistrationScreen(
         ) {
             Spacer(Modifier.height(24.dp))
 
-            OutlinedTextField(value = firstName, onValueChange = { firstName = it }, label = { Text("Nombres") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(
+                value = firstName, 
+                onValueChange = { firstName = it.replace("\n", "") }, 
+                label = { Text("Nombres") }, 
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
+            )
             Spacer(Modifier.height(16.dp))
-            OutlinedTextField(value = paternalLastName, onValueChange = { paternalLastName = it }, label = { Text("Apellido Paterno") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(
+                value = paternalLastName, 
+                onValueChange = { paternalLastName = it.replace("\n", "") }, 
+                label = { Text("Apellido Paterno") }, 
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
+            )
             Spacer(Modifier.height(16.dp))
-            OutlinedTextField(value = maternalLastName, onValueChange = { maternalLastName = it }, label = { Text("Apellido Materno") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(
+                value = maternalLastName, 
+                onValueChange = { maternalLastName = it.replace("\n", "") }, 
+                label = { Text("Apellido Materno") }, 
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
+            )
             Spacer(Modifier.height(16.dp))
 
             if (role == "passenger") {
                 OutlinedTextField(
                     value = email, 
                     onValueChange = { 
-                        email = it 
-                        isEmailError = !validateEmail(it)
+                        val text = it.replace("\n", "")
+                        email = text 
+                        isEmailError = !validateEmail(text)
                     }, 
                     label = { Text("Correo Electrónico") }, 
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email), 
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }), 
                     modifier = Modifier.fillMaxWidth(),
-                    isError = isEmailError
+                    isError = isEmailError,
+                    singleLine = true
                 )
                 if (isEmailError) {
                     Text("Por favor, introduce un correo válido.", color = MaterialTheme.colorScheme.error)
@@ -118,6 +150,7 @@ fun RegistrationScreen(
                                 onClick = {
                                     mainZone = zone
                                     expanded = false
+                                    focusManager.moveFocus(FocusDirection.Down)
                                 }
                             )
                         }
@@ -127,27 +160,63 @@ fun RegistrationScreen(
                 OutlinedTextField(
                     value = phone, 
                     onValueChange = { 
-                        phone = it 
-                        isPhoneError = !validatePhone(it)
+                        val text = it.replace("\n", "")
+                        phone = text 
+                        isPhoneError = !validatePhone(text)
                     }, 
                     label = { Text("Número de Teléfono") }, 
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone), 
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
                     modifier = Modifier.fillMaxWidth(),
-                    isError = isPhoneError
+                    isError = isPhoneError,
+                    singleLine = true
                 )
                 if (isPhoneError) {
                     Text("El teléfono debe tener 10 dígitos.", color = MaterialTheme.colorScheme.error)
                 }
                 Spacer(Modifier.height(16.dp))
-                OutlinedTextField(value = vehicleType, onValueChange = { vehicleType = it }, label = { Text("Tipo de Vehículo") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(
+                    value = vehicleType, 
+                    onValueChange = { vehicleType = it.replace("\n", "") }, 
+                    label = { Text("Tipo de Vehículo") }, 
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
+                )
                 Spacer(Modifier.height(16.dp))
-                OutlinedTextField(value = taxiNumber, onValueChange = { taxiNumber = it }, label = { Text("Número de Taxi") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(
+                    value = taxiNumber, 
+                    onValueChange = { taxiNumber = it.replace("\n", "") }, 
+                    label = { Text("Número de Taxi") }, 
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
+                )
                 Spacer(Modifier.height(16.dp))
-                OutlinedTextField(value = licensePlate, onValueChange = { licensePlate = it }, label = { Text("Placa") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(
+                    value = licensePlate, 
+                    onValueChange = { licensePlate = it.replace("\n", "") }, 
+                    label = { Text("Placa") }, 
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
+                )
             }
 
             Spacer(Modifier.height(16.dp))
-            OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text("Contraseña") }, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(
+                value = password, 
+                onValueChange = { password = it.replace("\n", "") }, 
+                label = { Text("Contraseña") }, 
+                visualTransformation = PasswordVisualTransformation(), 
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
+            )
             Spacer(Modifier.height(32.dp))
 
             Button(

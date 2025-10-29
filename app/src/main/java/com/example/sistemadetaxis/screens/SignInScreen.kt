@@ -2,6 +2,7 @@ package com.example.sistemadetaxis.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -9,7 +10,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
@@ -31,6 +35,11 @@ fun SignInScreen(
     val roleName = if (role == "passenger") "Pasajero" else "Taxista"
     val credentialLabel = if (role == "passenger") "Correo Electrónico" else "Número de Teléfono"
     val keyboardType = if (role == "passenger") KeyboardType.Email else KeyboardType.Phone
+    val focusManager = LocalFocusManager.current
+
+    fun onTextChange(value: String): String {
+        return value.replace(Regex("[\r\n]"), "")
+    }
 
     Scaffold(
         topBar = {
@@ -58,19 +67,37 @@ fun SignInScreen(
 
             OutlinedTextField(
                 value = credential,
-                onValueChange = { credential = it },
+                onValueChange = { credential = onTextChange(it) },
                 label = { Text(credentialLabel) },
-                keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-                modifier = Modifier.fillMaxWidth()
+                keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = ImeAction.Next),
+                keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
             )
             Spacer(Modifier.height(16.dp))
             OutlinedTextField(
                 value = password,
-                onValueChange = { password = it },
+                onValueChange = { password = onTextChange(it) },
                 label = { Text("Contraseña") },
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth(),
-                isError = error != null
+                isError = error != null,
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = {
+                    val user = if (role == "passenger") {
+                        DataSource.findPassengerByEmail(credential, password)
+                    } else {
+                        DataSource.findDriverByPhone(credential, password)
+                    }
+
+                    if (user != null) {
+                        val userId = if (user is com.example.sistemadetaxis.data.Passenger) user.id else (user as com.example.sistemadetaxis.data.TaxiDriver).id
+                        onSignInSuccess(userId)
+                    } else {
+                        error = "Credenciales incorrectas. Inténtalo de nuevo."
+                    }
+                })
             )
 
             error?.let {

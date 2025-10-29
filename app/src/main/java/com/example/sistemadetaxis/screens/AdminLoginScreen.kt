@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -20,6 +22,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
@@ -29,6 +33,21 @@ fun AdminLoginScreen(onAdminLoginSuccess: () -> Unit) {
     var password by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+    val focusManager = LocalFocusManager.current
+
+    fun onTextChange(value: String): String {
+        return value.replace(Regex("[\r\n]"), "")
+    }
+
+    fun tryLogin() {
+        if (password == "1234") {
+            onAdminLoginSuccess()
+        } else {
+            scope.launch {
+                snackbarHostState.showSnackbar("Invalid password")
+            }
+        }
+    }
 
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
@@ -44,20 +63,18 @@ fun AdminLoginScreen(onAdminLoginSuccess: () -> Unit) {
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedTextField(
                 value = password,
-                onValueChange = { password = it },
+                onValueChange = { password = onTextChange(it) },
                 label = { Text("Password") },
-                visualTransformation = PasswordVisualTransformation()
+                visualTransformation = PasswordVisualTransformation(),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { 
+                    focusManager.clearFocus()
+                    tryLogin()
+                })
             )
             Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = {
-                if (password == "1234") {
-                    onAdminLoginSuccess()
-                } else {
-                    scope.launch {
-                        snackbarHostState.showSnackbar("Invalid password")
-                    }
-                }
-            }) {
+            Button(onClick = { tryLogin() }) {
                 Text("Login")
             }
         }

@@ -47,6 +47,10 @@ fun RegistrationScreen(
     val roleName = if (role == "passenger") "Pasajero" else "Taxista"
     val focusManager = LocalFocusManager.current
 
+    fun onTextChange(value: String): String {
+        return value.replace(Regex("[\\r\\n]"), "")
+    }
+
     fun validateEmail(email: String): Boolean {
         return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
     }
@@ -80,7 +84,7 @@ fun RegistrationScreen(
 
             OutlinedTextField(
                 value = firstName, 
-                onValueChange = { firstName = it.replace("\n", "") }, 
+                onValueChange = { firstName = onTextChange(it) }, 
                 label = { Text("Nombres") }, 
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
@@ -90,7 +94,7 @@ fun RegistrationScreen(
             Spacer(Modifier.height(16.dp))
             OutlinedTextField(
                 value = paternalLastName, 
-                onValueChange = { paternalLastName = it.replace("\n", "") }, 
+                onValueChange = { paternalLastName = onTextChange(it) }, 
                 label = { Text("Apellido Paterno") }, 
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
@@ -100,7 +104,7 @@ fun RegistrationScreen(
             Spacer(Modifier.height(16.dp))
             OutlinedTextField(
                 value = maternalLastName, 
-                onValueChange = { maternalLastName = it.replace("\n", "") }, 
+                onValueChange = { maternalLastName = onTextChange(it) }, 
                 label = { Text("Apellido Materno") }, 
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
@@ -113,7 +117,7 @@ fun RegistrationScreen(
                 OutlinedTextField(
                     value = email, 
                     onValueChange = { 
-                        val text = it.replace("\n", "")
+                        val text = onTextChange(it)
                         email = text 
                         isEmailError = !validateEmail(text)
                     }, 
@@ -160,7 +164,7 @@ fun RegistrationScreen(
                 OutlinedTextField(
                     value = phone, 
                     onValueChange = { 
-                        val text = it.replace("\n", "")
+                        val text = onTextChange(it)
                         phone = text 
                         isPhoneError = !validatePhone(text)
                     }, 
@@ -177,7 +181,7 @@ fun RegistrationScreen(
                 Spacer(Modifier.height(16.dp))
                 OutlinedTextField(
                     value = vehicleType, 
-                    onValueChange = { vehicleType = it.replace("\n", "") }, 
+                    onValueChange = { vehicleType = onTextChange(it) }, 
                     label = { Text("Tipo de Vehículo") }, 
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
@@ -187,7 +191,7 @@ fun RegistrationScreen(
                 Spacer(Modifier.height(16.dp))
                 OutlinedTextField(
                     value = taxiNumber, 
-                    onValueChange = { taxiNumber = it.replace("\n", "") }, 
+                    onValueChange = { taxiNumber = onTextChange(it) }, 
                     label = { Text("Número de Taxi") }, 
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
@@ -197,7 +201,7 @@ fun RegistrationScreen(
                 Spacer(Modifier.height(16.dp))
                 OutlinedTextField(
                     value = licensePlate, 
-                    onValueChange = { licensePlate = it.replace("\n", "") }, 
+                    onValueChange = { licensePlate = onTextChange(it) }, 
                     label = { Text("Placa") }, 
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
@@ -209,7 +213,7 @@ fun RegistrationScreen(
             Spacer(Modifier.height(16.dp))
             OutlinedTextField(
                 value = password, 
-                onValueChange = { password = it.replace("\n", "") }, 
+                onValueChange = { password = onTextChange(it) }, 
                 label = { Text("Contraseña") }, 
                 visualTransformation = PasswordVisualTransformation(), 
                 modifier = Modifier.fillMaxWidth(),

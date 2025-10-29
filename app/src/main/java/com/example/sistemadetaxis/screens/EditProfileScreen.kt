@@ -3,6 +3,7 @@ package com.example.sistemadetaxis.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.* 
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -11,7 +12,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.sistemadetaxis.data.DataSource
@@ -46,6 +50,11 @@ fun EditProfileScreen(
 
     val zones = listOf("Centro", "San Sebastián", "Santa Anita", "La Trinidad", "El Carmen", "Guadalupe", "San Francisco Yancuitlalpan", "San José Xicohténcatl")
     var expanded by remember { mutableStateOf(false) }
+    val focusManager = LocalFocusManager.current
+
+    fun onTextChange(value: String): String {
+        return value.replace(Regex("[\r\n]"), "")
+    }
 
     LaunchedEffect(user) {
         if (user != null) {
@@ -102,24 +111,51 @@ fun EditProfileScreen(
         ) {
             Spacer(Modifier.height(24.dp))
 
-            OutlinedTextField(value = firstName, onValueChange = { firstName = it }, label = { Text("Nombres") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(
+                value = firstName, 
+                onValueChange = { firstName = onTextChange(it) }, 
+                label = { Text("Nombres") }, 
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
+            )
             Spacer(Modifier.height(16.dp))
-            OutlinedTextField(value = paternalLastName, onValueChange = { paternalLastName = it }, label = { Text("Apellido Paterno") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(
+                value = paternalLastName, 
+                onValueChange = { paternalLastName = onTextChange(it) }, 
+                label = { Text("Apellido Paterno") }, 
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
+            )
             Spacer(Modifier.height(16.dp))
-            OutlinedTextField(value = maternalLastName, onValueChange = { maternalLastName = it }, label = { Text("Apellido Materno") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(
+                value = maternalLastName, 
+                onValueChange = { maternalLastName = onTextChange(it) }, 
+                label = { Text("Apellido Materno") }, 
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
+            )
             Spacer(Modifier.height(16.dp))
 
             if (userRole == UserRole.PASSENGER) {
                 OutlinedTextField(
                     value = email, 
                     onValueChange = { 
-                        email = it 
-                        isEmailError = !validateEmail(it)
+                        val text = onTextChange(it)
+                        email = text 
+                        isEmailError = !validateEmail(text)
                     }, 
                     label = { Text("Correo Electrónico") }, 
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email), 
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }), 
                     modifier = Modifier.fillMaxWidth(),
-                    isError = isEmailError
+                    isError = isEmailError,
+                    singleLine = true
                 )
                 if (isEmailError) {
                     Text("Por favor, introduce un correo válido.", color = MaterialTheme.colorScheme.error)
@@ -147,6 +183,7 @@ fun EditProfileScreen(
                                 onClick = {
                                     mainZone = zone
                                     expanded = false
+                                    focusManager.clearFocus()
                                 }
                             )
                         }
@@ -156,23 +193,50 @@ fun EditProfileScreen(
                 OutlinedTextField(
                     value = phone, 
                     onValueChange = { 
-                        phone = it 
-                        isPhoneError = !validatePhone(it)
+                        val text = onTextChange(it)
+                        phone = text 
+                        isPhoneError = !validatePhone(text)
                     }, 
                     label = { Text("Número de Teléfono") }, 
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone), 
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
                     modifier = Modifier.fillMaxWidth(),
-                    isError = isPhoneError
+                    isError = isPhoneError,
+                    singleLine = true
                 )
                 if (isPhoneError) {
                     Text("El teléfono debe tener 10 dígitos.", color = MaterialTheme.colorScheme.error)
                 }
                 Spacer(Modifier.height(16.dp))
-                OutlinedTextField(value = vehicleType, onValueChange = { vehicleType = it }, label = { Text("Tipo de Vehículo") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(
+                    value = vehicleType, 
+                    onValueChange = { vehicleType = onTextChange(it) }, 
+                    label = { Text("Tipo de Vehículo") }, 
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
+                )
                 Spacer(Modifier.height(16.dp))
-                OutlinedTextField(value = taxiNumber, onValueChange = { taxiNumber = it }, label = { Text("Número de Taxi") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(
+                    value = taxiNumber, 
+                    onValueChange = { taxiNumber = onTextChange(it) }, 
+                    label = { Text("Número de Taxi") }, 
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
+                )
                 Spacer(Modifier.height(16.dp))
-                OutlinedTextField(value = licensePlate, onValueChange = { licensePlate = it }, label = { Text("Placa") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(
+                    value = licensePlate, 
+                    onValueChange = { licensePlate = onTextChange(it) }, 
+                    label = { Text("Placa") }, 
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
+                )
             }
 
             Spacer(Modifier.height(32.dp))

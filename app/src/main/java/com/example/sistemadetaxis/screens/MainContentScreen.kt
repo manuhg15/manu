@@ -9,13 +9,26 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.example.sistemadetaxis.UserRole
+import com.example.sistemadetaxis.data.UserRole
 
 @Composable
-fun MainContentScreen(currentUserRole: UserRole?, loggedInDriverId: String) {
+fun MainContentScreen(
+    currentUserRole: UserRole?,
+    loggedInUserId: String?,
+    onLogout: () -> Unit,
+    onViewProfile: () -> Unit // Added this
+) {
     when (currentUserRole) {
-        UserRole.PASSENGER -> PassengerScreen()
-        UserRole.DRIVER -> DriverScreen(driverId = loggedInDriverId)
+        UserRole.PASSENGER -> {
+            if (loggedInUserId != null) {
+                PassengerScreen(passengerId = loggedInUserId, onViewProfile = onViewProfile, onLogout = onLogout)
+            }
+        }
+        UserRole.DRIVER -> {
+            if (loggedInUserId != null) {
+                DriverScreen(driverId = loggedInUserId, onViewProfile = onViewProfile, onLogout = onLogout)
+            }
+        }
         null -> {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("Por favor, inicia sesión en la pestaña 'Acceder'", textAlign = TextAlign.Center, modifier = Modifier.padding(32.dp))

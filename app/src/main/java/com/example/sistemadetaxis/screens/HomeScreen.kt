@@ -2,6 +2,7 @@ package com.example.sistemadetaxis.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,7 +22,7 @@ import androidx.compose.ui.unit.sp
 import com.example.sistemadetaxis.R
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(onIconClick: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -48,10 +49,12 @@ fun HomeScreen() {
         Image(
             painter = painterResource(id = R.drawable.ic_taxi_location),
             contentDescription = "Icono de taxi",
-            modifier = Modifier.size(250.dp)
+            modifier = Modifier
+                .size(250.dp)
+                .clickable { onIconClick() } // Make the icon clickable
         )
         Text(
-            text = "Da clic en la pestaña 'Acceder' para iniciar",
+            text = "Da clic en el icono para iniciar",
             fontSize = 18.sp,
             fontFamily = FontFamily.Monospace,
             textAlign = TextAlign.Center

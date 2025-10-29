@@ -1,14 +1,9 @@
 package com.example.sistemadetaxis.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -21,10 +16,10 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun AuthChoiceScreen(
-    role: String,
-    onAuthSuccess: () -> Unit
+    onNavigateToSignIn: () -> Unit,
+    onNavigateToRegister: () -> Unit,
+    onBackClick: () -> Unit // Added for back navigation
 ) {
-    val roleName = if (role == "passenger") "Pasajero" else "Taxista"
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -41,20 +36,27 @@ fun AuthChoiceScreen(
             modifier = Modifier.padding(bottom = 48.dp),
             lineHeight = 40.sp
         )
-        // In a real app, these would navigate to different screens with forms.
-        // For now, both will act as a successful login/registration.
+
         Button(
-            onClick = { onAuthSuccess() },
+            onClick = onNavigateToSignIn,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Iniciar Sesión como $roleName")
+            Text("Iniciar Sesión")
         }
         Spacer(modifier = Modifier.height(16.dp))
         Button(
-            onClick = { onAuthSuccess() },
+            onClick = onNavigateToRegister,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Registrarse como $roleName")
+            Text("Registrarse")
+        }
+        Spacer(modifier = Modifier.height(32.dp))
+        // Back button
+        OutlinedButton(
+            onClick = onBackClick,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Regresar")
         }
     }
 }

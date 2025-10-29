@@ -18,10 +18,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.sistemadetaxis.UserRole
 
 @Composable
-fun LoginScreen(onLogin: (UserRole) -> Unit) {
+fun LoginScreen(onRoleSelected: (String) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -31,26 +30,27 @@ fun LoginScreen(onLogin: (UserRole) -> Unit) {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Inicia sesión o regístrate",
+            text = "Selecciona tu rol",
             fontSize = 36.sp,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(bottom = 48.dp)
+            modifier = Modifier.padding(bottom = 48.dp),
+            lineHeight = 40.sp
         )
-        Text("Para fines de demostración, selecciona tu rol:", textAlign = TextAlign.Center)
+        Text("¿Cómo usarás la aplicación?", textAlign = TextAlign.Center)
         Spacer(modifier = Modifier.height(24.dp))
         Button(
-            onClick = { onLogin(UserRole.PASSENGER) },
+            onClick = { onRoleSelected("passenger") },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Entrar como Pasajero")
+            Text("Soy Pasajero")
         }
         Spacer(modifier = Modifier.height(16.dp))
         Button(
-            onClick = { onLogin(UserRole.DRIVER) },
+            onClick = { onRoleSelected("driver") },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Entrar como Taxista")
+            Text("Soy Taxista")
         }
     }
 }

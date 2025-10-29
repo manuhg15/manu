@@ -5,24 +5,24 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.sistemadetaxis.data.DataSource
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegistrationScreen(
     role: String,
-    onRegisterSuccess: () -> Unit
+    onRegisterSuccess: () -> Unit,
+    onBackClick: () -> Unit
 ) {
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -35,50 +35,63 @@ fun RegistrationScreen(
 
     val roleName = if (role == "passenger") "Pasajero" else "Taxista"
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFF0F0F0))
-            .padding(32.dp)
-            .verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text("Registro de $roleName", fontSize = 28.sp, textAlign = TextAlign.Center)
-        Spacer(Modifier.height(24.dp))
-
-        OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Nombre Completo") }, modifier = Modifier.fillMaxWidth())
-        Spacer(Modifier.height(16.dp))
-
-        if (role == "passenger") {
-            OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text("Correo Electrónico") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email), modifier = Modifier.fillMaxWidth())
-            Spacer(Modifier.height(16.dp))
-            OutlinedTextField(value = mainZone, onValueChange = { mainZone = it }, label = { Text("Zona de Residencia") }, modifier = Modifier.fillMaxWidth())
-        } else {
-            OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text("Número de Teléfono") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone), modifier = Modifier.fillMaxWidth())
-            Spacer(Modifier.height(16.dp))
-            OutlinedTextField(value = vehicleType, onValueChange = { vehicleType = it }, label = { Text("Tipo de Vehículo") }, modifier = Modifier.fillMaxWidth())
-            Spacer(Modifier.height(16.dp))
-            OutlinedTextField(value = taxiNumber, onValueChange = { taxiNumber = it }, label = { Text("Número de Taxi") }, modifier = Modifier.fillMaxWidth())
-            Spacer(Modifier.height(16.dp))
-            OutlinedTextField(value = licensePlate, onValueChange = { licensePlate = it }, label = { Text("Placa") }, modifier = Modifier.fillMaxWidth())
-        }
-
-        Spacer(Modifier.height(16.dp))
-        OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text("Contraseña") }, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth())
-        Spacer(Modifier.height(32.dp))
-
-        Button(
-            onClick = {
-                if (role == "passenger") {
-                    DataSource.registerPassenger(name, email, mainZone, password)
-                } else {
-                    DataSource.registerDriver(name, phone, vehicleType, taxiNumber, licensePlate, password)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Registro de $roleName") },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar")
+                    }
                 }
-                onRegisterSuccess()
-            },
-            modifier = Modifier.fillMaxWidth()
+            )
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0xFFF0F0F0))
+                .padding(innerPadding)
+                .padding(32.dp)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Registrarse")
+            Spacer(Modifier.height(24.dp))
+
+            OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Nombre Completo") }, modifier = Modifier.fillMaxWidth())
+            Spacer(Modifier.height(16.dp))
+
+            if (role == "passenger") {
+                OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text("Correo Electrónico") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email), modifier = Modifier.fillMaxWidth())
+                Spacer(Modifier.height(16.dp))
+                OutlinedTextField(value = mainZone, onValueChange = { mainZone = it }, label = { Text("Zona de Residencia") }, modifier = Modifier.fillMaxWidth())
+            } else {
+                OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text("Número de Teléfono") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone), modifier = Modifier.fillMaxWidth())
+                Spacer(Modifier.height(16.dp))
+                OutlinedTextField(value = vehicleType, onValueChange = { vehicleType = it }, label = { Text("Tipo de Vehículo") }, modifier = Modifier.fillMaxWidth())
+                Spacer(Modifier.height(16.dp))
+                OutlinedTextField(value = taxiNumber, onValueChange = { taxiNumber = it }, label = { Text("Número de Taxi") }, modifier = Modifier.fillMaxWidth())
+                Spacer(Modifier.height(16.dp))
+                OutlinedTextField(value = licensePlate, onValueChange = { licensePlate = it }, label = { Text("Placa") }, modifier = Modifier.fillMaxWidth())
+            }
+
+            Spacer(Modifier.height(16.dp))
+            OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text("Contraseña") }, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth())
+            Spacer(Modifier.height(32.dp))
+
+            Button(
+                onClick = {
+                    if (role == "passenger") {
+                        DataSource.registerPassenger(name, email, mainZone, password)
+                    } else {
+                        DataSource.registerDriver(name, phone, vehicleType, taxiNumber, licensePlate, password)
+                    }
+                    onRegisterSuccess()
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Registrarse")
+            }
         }
     }
 }

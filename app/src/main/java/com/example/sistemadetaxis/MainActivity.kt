@@ -7,11 +7,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -23,6 +28,7 @@ import androidx.navigation.navArgument
 import com.example.sistemadetaxis.data.UserRole
 import com.example.sistemadetaxis.screens.*
 import com.example.sistemadetaxis.ui.theme.SistemaDeTaxisTheme
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -50,8 +56,10 @@ fun TaxiApp() {
     var currentUserRole by remember { mutableStateOf<UserRole?>(null) }
     var loggedInUserId by remember { mutableStateOf<String?>(null) }
     var showLogoutDialog by remember { mutableStateOf(false) }
-    var pendingTabChange by remember { mutableStateOf<Int?>(null)
-    }
+    var pendingTabChange by remember { mutableStateOf<Int?>(null) }
+    
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     fun onLogout(andThen: () -> Unit = {}) {
         currentUserRole = null
@@ -73,6 +81,9 @@ fun TaxiApp() {
         // If user is not logged in and clicks service tab, redirect to login
         else if (index == 2 && currentUserRole == null) {
             handleTabClick(1) // Go to Acceder tab
+            scope.launch {
+                snackbarHostState.showSnackbar("Debes iniciar sesión para acceder al servicio.")
+            }
         } 
         // Otherwise, navigate normally
         else {
@@ -119,6 +130,16 @@ fun TaxiApp() {
                         text = { Text(title) }
                     )
                 }
+            }
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState) { data ->
+                Snackbar(
+                    modifier = Modifier.padding(12.dp),
+                    snackbarData = data,
+                    containerColor = Color(0xFF303030),
+                    contentColor = Color.White
+                )
             }
         }
     ) { innerPadding ->

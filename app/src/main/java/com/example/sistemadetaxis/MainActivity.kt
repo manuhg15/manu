@@ -128,7 +128,18 @@ fun TaxiApp() {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable("home") { HomeScreen(onIconClick = { handleTabClick(1) }) }
-            composable("login_flow_start") { LoginScreen(onRoleSelected = { role -> navController.navigate("auth_choice/$role") }) }
+            composable("login_flow_start") { 
+                LoginScreen(
+                    onRoleSelected = { role -> navController.navigate("auth_choice/$role") },
+                    onAdminClick = { navController.navigate("admin_login") }
+                ) 
+            }
+            composable("admin_login") {
+                AdminLoginScreen(onAdminLoginSuccess = { navController.navigate("admin_dashboard") })
+            }
+            composable("admin_dashboard") {
+                AdminDashboardScreen(onLogout = { navController.navigate("home") })
+            }
 
             composable("auth_choice/{role}", arguments = listOf(navArgument("role") { type = NavType.StringType })) { backStack ->
                 val role = backStack.arguments?.getString("role")!!

@@ -10,56 +10,71 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults // Necesario para personalizar el color
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+// Definición de colores según tus requisitos
+val GreenButtonColor = Color(0xFF4CAF50) // Verde para PASAJERO
+val PurpleButtonColor = Color(0xFF673AB7) // Morado para CONDUCTOR
+
 @Composable
-fun LoginScreen(onRoleSelected: (String) -> Unit, onAdminClick: () -> Unit) {
-    Box(modifier = Modifier.fillMaxSize()) { 
+fun AuthChoiceScreen(onRoleSelected: (String) -> Unit, onAdminClick: () -> Unit) {
+    Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color(0xFFF0F0F0))
-                .padding(32.dp),
+                .padding(horizontal = 32.dp), // Reducimos el padding vertical
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Center // Centra los elementos verticalmente
         ) {
-            Text(
-                text = "Selecciona tu rol",
-                fontSize = 36.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(bottom = 48.dp),
-                lineHeight = 40.sp
-            )
-            Text("¿Cómo usarás la aplicación?", textAlign = TextAlign.Center)
-            Spacer(modifier = Modifier.height(24.dp))
+            // Se elimina el texto "Selecciona tu rol" y la pregunta.
+
             Button(
                 onClick = { onRoleSelected("passenger") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(60.dp), // Hace el botón más grande
+                colors = ButtonDefaults.buttonColors(containerColor = GreenButtonColor)
             ) {
-                Text("Soy Pasajero")
+                Text(
+                    text = "PASAJERO",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
             }
-            Spacer(modifier = Modifier.height(16.dp))
+
+            Spacer(modifier = Modifier.height(24.dp)) // Espacio entre botones
+
             Button(
                 onClick = { onRoleSelected("driver") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(60.dp), // Hace el botón más grande
+                colors = ButtonDefaults.buttonColors(containerColor = PurpleButtonColor)
             ) {
-                Text("Soy Taxista")
+                Text(
+                    text = "CONDUCTOR",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
+
+        // Botón Admin
         Button(
             onClick = onAdminClick,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(16.dp)
+                .padding(16.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = PurpleButtonColor)
         ) {
             Text("Admin")
         }

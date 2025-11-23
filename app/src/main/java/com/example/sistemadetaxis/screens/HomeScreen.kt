@@ -54,7 +54,7 @@ fun HomeScreen(onIconClick: () -> Unit) {
                 .clickable { onIconClick() } // Make the icon clickable
         )
         Text(
-            text = "Da clic en el icono para iniciar",
+            text = "¡Toca el icono para iniciar!",
             fontSize = 18.sp,
             fontFamily = FontFamily.Monospace,
             textAlign = TextAlign.Center

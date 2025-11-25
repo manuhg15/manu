@@ -25,7 +25,7 @@ val GreenButtonColor = Color(0xFF4CAF50) // Verde para PASAJERO
 val PurpleButtonColor = Color(0xFF673AB7) // Morado para CONDUCTOR
 
 @Composable
-fun AuthChoiceScreen(onRoleSelected: (String) -> Unit, onAdminClick: () -> Unit) {
+fun LoginScreen(onRoleSelected: (String) -> Unit, onAdminClick: () -> Unit) {
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier

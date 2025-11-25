@@ -4,36 +4,38 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Snackbar
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
-import androidx.compose.material3.Text
-import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.*
+import androidx.compose.runtime.* import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.sistemadetaxis.data.UserRole
-import com.example.sistemadetaxis.screens.*
-import com.example.sistemadetaxis.ui.theme.SistemaDeTaxisTheme
-import kotlinx.coroutines.launch
+// Importa todas las pantallas necesarias desde la carpeta screens
+import com.example.sistemadetaxis.screens.* import com.example.sistemadetaxis.ui.theme.SistemaDeTaxisTheme
+import kotlinx.coroutines.launch // Necesario para popUpTo
+
+// Definiciones de colores
+val GreenButtonColor = Color(0xFF4CAF50)
+val PurpleButtonColor = Color(0xFF673AB7)
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Configuración para el modo Fullscreen o Edge-to-Edge
         WindowCompat.setDecorFitsSystemWindows(window, false)
         val controller = WindowInsetsControllerCompat(window, window.decorView)
         controller.hide(WindowInsetsCompat.Type.systemBars())
@@ -47,58 +49,48 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaxiApp() {
     val navController = rememberNavController()
-    var selectedTab by remember { mutableIntStateOf(0) }
-    val tabs = listOf("Inicio", "Acceder", "Servicio")
 
     var currentUserRole by remember { mutableStateOf<UserRole?>(null) }
     var loggedInUserId by remember { mutableStateOf<String?>(null) }
     var showLogoutDialog by remember { mutableStateOf(false) }
-    var pendingTabChange by remember { mutableStateOf<Int?>(null) }
-    
-    val scope = rememberCoroutineScope()
-    val snackbarHostState = remember { SnackbarHostState() }
 
-    fun onLogout(andThen: () -> Unit = {}) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope() // Necesario si usas scope.launch para popUpTo, aunque la versión actual no lo necesita.
+
+
+    fun onLogout() {
         currentUserRole = null
         loggedInUserId = null
-        // After logout, always go to the Acceder tab
-        selectedTab = 1
-        navController.navigate("login_flow_start") {
-            popUpTo(navController.graph.startDestinationId)
+        // Navega al inicio (pantalla de bienvenida) y limpia el historial
+        navController.navigate("home") {
+            popUpTo(navController.graph.startDestinationId) { inclusive = true }
+            launchSingleTop = true
         }
-        andThen()
     }
 
-    fun handleTabClick(index: Int) {
-        // If user is logged in (on service tab) and clicks another tab
-        if (selectedTab == 2 && currentUserRole != null && index != 2) {
-            pendingTabChange = index
-            showLogoutDialog = true
-        } 
-        // If user is not logged in and clicks service tab, redirect to login
-        else if (index == 2 && currentUserRole == null) {
-            handleTabClick(1) // Go to Acceder tab
-            scope.launch {
-                snackbarHostState.showSnackbar("Debes iniciar sesión para acceder al servicio.")
-            }
-        } 
-        // Otherwise, navigate normally
-        else {
-            selectedTab = index
-            val route = when (index) {
-                0 -> "home"
-                1 -> "login_flow_start"
-                else -> "main_content"
-            }
-            navController.navigate(route) {
-                popUpTo(navController.graph.startDestinationId)
-                launchSingleTop = true
-            }
+    // Obtiene la ruta actual para el TopAppBar
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
+    // Función para generar el título y el modo (Título fijo)
+    fun getAppBarTitleAndMode(): Pair<String, String?> {
+        val modeText = when (currentUserRole) {
+            UserRole.PASSENGER -> "MODO: PASAJERO"
+            UserRole.DRIVER -> "MODO: CONDUCTOR"
+            else -> null
         }
+
+        // Título Fijo
+        val title = "Consultoria de Taxis"
+
+        return Pair(title, modeText)
     }
+
+    val (appBarTitle, modeText) = getAppBarTitleAndMode()
 
     if (showLogoutDialog) {
         AlertDialog(
@@ -106,31 +98,51 @@ fun TaxiApp() {
             title = { Text("Cerrar Sesión") },
             text = { Text("¿Estás seguro de que quieres cerrar sesión?") },
             confirmButton = {
-                Button({
-                    showLogoutDialog = false
-                    onLogout { 
-                        pendingTabChange?.let { handleTabClick(it) }
-                        pendingTabChange = null
-                    } 
-                }) { Text("Sí, Salir") }
+                Button({ showLogoutDialog = false; onLogout() }) { Text("Sí, Salir") }
             },
             dismissButton = {
-                Button({ showLogoutDialog = false; pendingTabChange = null }) { Text("Cancelar") }
+                Button({ showLogoutDialog = false }) { Text("Cancelar") }
             }
         )
     }
 
     Scaffold(
         topBar = {
-            TabRow(selectedTabIndex = selectedTab) {
-                tabs.forEachIndexed { index, title ->
-                    Tab(
-                        selected = selectedTab == index,
-                        onClick = { handleTabClick(index) },
-                        text = { Text(title) }
+            // **TOPAPPBAR DINÁMICO**
+            TopAppBar(
+                title = {
+                    Text(
+                        text = appBarTitle,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
                     )
+                },
+                // Etiqueta de MODO en la derecha
+                actions = {
+                    modeText?.let {
+                        Text(
+                            text = it,
+                            modifier = Modifier.padding(end = 16.dp),
+                            color = if (currentUserRole == UserRole.PASSENGER) GreenButtonColor else PurpleButtonColor,
+                            fontSize = 14.sp
+                        )
+                    }
+                },
+                // Botón de Regresar/Navegación
+                navigationIcon = {
+                    // Muestra el botón de regreso si NO estamos en la raíz o en pantallas iniciales
+                    val showBack = navController.previousBackStackEntry != null &&
+                            currentRoute != "home" &&
+                            currentRoute != "login_flow_start" &&
+                            currentRoute != "main_content"
+
+                    if (showBack) {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Regresar")
+                        }
+                    }
                 }
-            }
+            )
         },
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState) { data ->
@@ -148,21 +160,29 @@ fun TaxiApp() {
             startDestination = "home",
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable("home") { HomeScreen(onIconClick = { handleTabClick(1) }) }
-            composable("login_flow_start") { 
-                LoginScreen(
-                    onRoleSelected = { role -> navController.navigate("auth_choice/$role") },
-                    onAdminClick = { navController.navigate("admin_login") }
-                ) 
+
+            composable("home") {
+                // Al hacer clic en el ícono, navega a la selección de rol
+                HomeScreen(onIconClick = { navController.navigate("login_flow_start") })
             }
+
+            composable("login_flow_start") {
+                LoginScreen(
+                    onRoleSelected = { role ->
+                        navController.navigate("auth_choice/$role")
+                    },
+                    onAdminClick = { navController.navigate("admin_login") }
+                )
+            }
+
             composable("admin_login") {
                 AdminLoginScreen(onAdminLoginSuccess = { navController.navigate("admin_dashboard") })
             }
+
+            // ✅ CORRECCIÓN: ELIMINAR PARÁMETROS onAddPassenger y onAddDriver
             composable("admin_dashboard") {
                 AdminDashboardScreen(
-                    onLogout = { navController.navigate("home") },
-                    onAddPassenger = { navController.navigate("register/passenger") },
-                    onAddDriver = { navController.navigate("register/driver") }
+                    onLogout = { onLogout() }
                 )
             }
 
@@ -178,8 +198,9 @@ fun TaxiApp() {
             composable("register/{role}", arguments = listOf(navArgument("role") { type = NavType.StringType })) { backStack ->
                 val role = backStack.arguments?.getString("role")!!
                 RegistrationScreen(
-                    role = role, 
-                    onRegisterSuccess = { navController.popBackStack() }, 
+                    role = role,
+                    // Después de registrar, se redirige a la pantalla de Iniciar Sesión para el rol
+                    onRegisterSuccess = { navController.navigate("sign_in/$role") },
                     onBackClick = { navController.popBackStack() }
                 )
             }
@@ -187,26 +208,43 @@ fun TaxiApp() {
             composable("sign_in/{role}", arguments = listOf(navArgument("role") { type = NavType.StringType })) { backStack ->
                 val role = backStack.arguments?.getString("role")!!
                 SignInScreen(
-                    role = role, 
-                    onSignInSuccess = { userId -> 
+                    role = role,
+                    onSignInSuccess = { userId ->
                         currentUserRole = if (role == "passenger") UserRole.PASSENGER else UserRole.DRIVER
                         loggedInUserId = userId
-                        handleTabClick(2) // Navigate to service tab
-                    }, 
-                    onBackClick = { navController.popBackStack() })
+                        // Después del login, navegar directamente al servicio (MainContentScreen)
+                        navController.navigate("main_content") {
+                            // Limpia el historial hasta 'home' e incluye 'home'
+                            popUpTo("home") { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    },
+                    onBackClick = { navController.popBackStack() },
+                    // ✅ NUEVO ARGUMENTO: Navegación a recuperar NIP
+                    onRecoverNipClick = { r -> navController.navigate("recover_nip/$r") }
+                )
+            }
+
+            // ✅ NUEVA COMPOSABLE: Ruta para Recuperar NIP
+            composable("recover_nip/{role}", arguments = listOf(navArgument("role") { type = NavType.StringType })) { backStack ->
+                val role = backStack.arguments?.getString("role")!!
+                RecoverNipScreen(
+                    role = role,
+                    onBackClick = { navController.popBackStack() }
+                )
             }
 
             composable("profile") {
                 if (loggedInUserId != null && currentUserRole != null) {
                     ProfileScreen(
-                        userId = loggedInUserId!!, 
-                        userRole = currentUserRole!!, 
+                        userId = loggedInUserId!!,
+                        userRole = currentUserRole!!,
                         onBackClick = { navController.popBackStack() },
                         onEditProfile = { userId, userRole -> navController.navigate("edit_profile/$userId/${userRole.name}") }
                     )
                 }
             }
-            
+
             composable(
                 "edit_profile/{userId}/{userRole}",
                 arguments = listOf(

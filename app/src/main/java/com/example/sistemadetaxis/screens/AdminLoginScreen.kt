@@ -59,12 +59,12 @@ fun AdminLoginScreen(onAdminLoginSuccess: () -> Unit) {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Admin Login")
+            Text("Zona del Administrador")
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = onTextChange(it) },
-                label = { Text("Password") },
+                label = { Text("Contraseña") },
                 visualTransformation = PasswordVisualTransformation(),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
@@ -75,7 +75,7 @@ fun AdminLoginScreen(onAdminLoginSuccess: () -> Unit) {
             )
             Spacer(modifier = Modifier.height(16.dp))
             Button(onClick = { tryLogin() }) {
-                Text("Login")
+                Text("INGRESAR")
             }
         }
     }

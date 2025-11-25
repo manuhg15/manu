@@ -29,9 +29,15 @@ fun MainContentScreen(
                 DriverScreen(driverId = loggedInUserId, onViewProfile = onViewProfile, onLogout = onLogout)
             }
         }
+        // ✅ CORRECCIÓN: Agregar el caso ADMIN. Asumimos que no debería estar aquí, pero lo manejamos.
+        UserRole.ADMIN -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("Error: Administrador accedió al contenido principal de usuario.", textAlign = TextAlign.Center, modifier = Modifier.padding(32.dp))
+            }
+        }
         null -> {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Por favor, inicia sesión en la pestaña 'Acceder'", textAlign = TextAlign.Center, modifier = Modifier.padding(32.dp))
+                Text("Por favor, inicia sesión para acceder al servicio.", textAlign = TextAlign.Center, modifier = Modifier.padding(32.dp))
             }
         }
     }

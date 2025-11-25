@@ -1,63 +1,111 @@
 package com.example.sistemadetaxis.screens
 
+// Importaciones de Compose Foundation
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+
+// Importaciones de Compose Material3
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
+
+// Importaciones de Compose Runtime y UI
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.*
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.example.sistemadetaxis.data.DataSource
+
+// Importaciones de Firebase Service y Coroutines
+import com.example.sistemadetaxis.data.FirebaseService
+import kotlinx.coroutines.launch
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegistrationScreen(
     role: String,
-    onRegisterSuccess: () -> Unit,
+    onRegisterSuccess: () -> Unit, // Navegará a SignIn
     onBackClick: () -> Unit
 ) {
+    // Variables de Estado
     var firstName by remember { mutableStateOf("") }
     var paternalLastName by remember { mutableStateOf("") }
     var maternalLastName by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var isEmailError by remember { mutableStateOf(false) }
     var phone by remember { mutableStateOf("") }
     var isPhoneError by remember { mutableStateOf(false) }
-    var password by remember { mutableStateOf("") }
+    var nip by remember { mutableStateOf("") }
+    var isNipError by remember { mutableStateOf(false) }
     var mainZone by remember { mutableStateOf("") }
+    var expanded by remember { mutableStateOf(false) }
     var vehicleType by remember { mutableStateOf("") }
     var taxiNumber by remember { mutableStateOf("") }
     var licensePlate by remember { mutableStateOf("") }
 
-    val zones = listOf("Centro", "San Sebastián", "Santa Anita", "La Trinidad", "El Carmen", "Guadalupe", "San Francisco Yancuitlalpan", "San José Xicohténcatl")
-    var expanded by remember { mutableStateOf(false) }
+    // ESTADOS PARA ASINCRONÍA Y ERRORES
+    var registrationError by remember { mutableStateOf<String?>(null) }
+    var isLoading by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope() // Scope para lanzar corrutinas
 
+
+    val zones = listOf("Huamantla Centro", "San Sebastián", "Santa Anita", "P. la Cruz", "El Carmen", "Zaragoza", "San Francisco Yancuitlalpan", "San José Xicohténcatl")
     val roleName = if (role == "passenger") "Pasajero" else "Taxista"
     val focusManager = LocalFocusManager.current
 
-    fun onTextChange(value: String): String {
-        return value.replace(Regex("[\\r\\n]"), "")
+    // VALIDACIONES DEL FORMULARIO
+    fun onTextChange(value: String): String { return value.replace(Regex("[\\r\\n]"), "") }
+    fun validatePhone(phone: String): Boolean { return phone.length == 10 && phone.all { it.isDigit() } }
+
+    // ✅ VALIDACIÓN DE 6 DÍGITOS
+    fun validateNip(nip: String): Boolean { return nip.length == 6 && nip.all { it.isDigit() } }
+
+    val isPassengerFormValid =
+        firstName.isNotBlank() && paternalLastName.isNotBlank() && maternalLastName.isNotBlank() &&
+                validatePhone(phone) && mainZone.isNotBlank() && validateNip(nip)
+
+    val isDriverFormValid =
+        firstName.isNotBlank() && paternalLastName.isNotBlank() && maternalLastName.isNotBlank() &&
+                validatePhone(phone) && vehicleType.isNotBlank() && taxiNumber.isNotBlank() &&
+                licensePlate.isNotBlank() && validateNip(nip)
+
+    val isCurrentFormValid = if (role == "passenger") isPassengerFormValid else isDriverFormValid
+
+    // FUNCIÓN DE REGISTRO ASÍNCRONA
+    fun attemptRegistration() {
+        registrationError = null
+
+        if (!isCurrentFormValid || isLoading) return
+
+        isLoading = true
+        val fullName = "$firstName $paternalLastName $maternalLastName"
+
+        scope.launch { // LLAMADA ASÍNCRONA A FIREBASE
+            val userId = if (role == "passenger") {
+                FirebaseService.registerPassenger(fullName, phone, mainZone, nip)
+            } else {
+                FirebaseService.registerDriver(fullName, phone, vehicleType, taxiNumber, licensePlate, nip)
+            }
+
+            isLoading = false // Finalizar carga
+
+            if (userId != null) {
+                // Éxito: El usuario se creó en Auth y Firestore
+                onRegisterSuccess()
+            } else {
+                // Fallo: Error de unicidad de Firebase Auth (teléfono duplicado) o error de red.
+                registrationError = "El número de teléfono ya está registrado como ${roleName} o hay un error de conexión."
+            }
+        }
     }
 
-    fun validateEmail(email: String): Boolean {
-        return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
-    }
-
-    fun validatePhone(phone: String): Boolean {
-        return phone.length == 10 && phone.all { it.isDigit() }
-    }
 
     Scaffold(
         topBar = {
@@ -76,172 +124,131 @@ fun RegistrationScreen(
                 .fillMaxSize()
                 .background(Color(0xFFF0F0F0))
                 .padding(innerPadding)
-                .padding(32.dp)
+                .padding(horizontal = 32.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(Modifier.height(24.dp))
 
-            OutlinedTextField(
-                value = firstName, 
-                onValueChange = { firstName = onTextChange(it) }, 
-                label = { Text("Nombres") }, 
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
-            )
+            // 1. CAMPOS DE DATOS PERSONALES
+            OutlinedTextField(value = firstName, onValueChange = { firstName = onTextChange(it) }, label = { Text("Nombres*") }, modifier = Modifier.fillMaxWidth(), singleLine = true, keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next), keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }))
             Spacer(Modifier.height(16.dp))
-            OutlinedTextField(
-                value = paternalLastName, 
-                onValueChange = { paternalLastName = onTextChange(it) }, 
-                label = { Text("Apellido Paterno") }, 
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
-            )
+            OutlinedTextField(value = paternalLastName, onValueChange = { paternalLastName = onTextChange(it) }, label = { Text("Apellido Paterno*") }, modifier = Modifier.fillMaxWidth(), singleLine = true, keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next), keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }))
             Spacer(Modifier.height(16.dp))
-            OutlinedTextField(
-                value = maternalLastName, 
-                onValueChange = { maternalLastName = onTextChange(it) }, 
-                label = { Text("Apellido Materno") }, 
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
-            )
+            OutlinedTextField(value = maternalLastName, onValueChange = { maternalLastName = onTextChange(it) }, label = { Text("Apellido Materno*") }, modifier = Modifier.fillMaxWidth(), singleLine = true, keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next), keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }))
             Spacer(Modifier.height(16.dp))
 
+            // 2. NÚMERO DE TELÉFONO (Restricción 10 dígitos)
+            OutlinedTextField(
+                value = phone,
+                onValueChange = {
+                    val text = onTextChange(it)
+                    if (text.length <= 10 && text.all { char -> char.isDigit() }) {
+                        phone = text
+                        isPhoneError = text.isNotBlank() && !validatePhone(text)
+                    }
+                },
+                label = { Text("Número de Teléfono* (10 dígitos)") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, imeAction = ImeAction.Next),
+                keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
+                modifier = Modifier.fillMaxWidth(),
+                isError = isPhoneError || registrationError != null,
+                singleLine = true
+            )
+            if (isPhoneError) {
+                Text("El teléfono debe ser numérico y tener 10 dígitos.", color = MaterialTheme.colorScheme.error)
+            }
+            Spacer(Modifier.height(16.dp))
+
+            // 3. CAMPOS ESPECÍFICOS POR ROL
             if (role == "passenger") {
-                OutlinedTextField(
-                    value = email, 
-                    onValueChange = { 
-                        val text = onTextChange(it)
-                        email = text 
-                        isEmailError = !validateEmail(text)
-                    }, 
-                    label = { Text("Correo Electrónico") }, 
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
-                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }), 
-                    modifier = Modifier.fillMaxWidth(),
-                    isError = isEmailError,
-                    singleLine = true
-                )
-                if (isEmailError) {
-                    Text("Por favor, introduce un correo válido.", color = MaterialTheme.colorScheme.error)
-                }
-                Spacer(Modifier.height(16.dp))
-                ExposedDropdownMenuBox(
-                    expanded = expanded,
-                    onExpandedChange = { expanded = !expanded }
-                ) {
+                // ZONA DE RESIDENCIA (OBLIGATORIO)
+                ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
                     OutlinedTextField(
-                        value = mainZone,
-                        onValueChange = { },
-                        label = { Text("Zona de Residencia") },
-                        readOnly = true,
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                        modifier = Modifier.menuAnchor().fillMaxWidth()
+                        value = mainZone, onValueChange = { }, label = { Text("Zona de Residencia*") },
+                        readOnly = true, trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                        modifier = Modifier.menuAnchor().fillMaxWidth(), isError = mainZone.isBlank()
                     )
-                    ExposedDropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }
-                    ) {
+                    ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                         zones.forEach { zone ->
-                            DropdownMenuItem(
-                                text = { Text(zone) },
-                                onClick = {
-                                    mainZone = zone
-                                    expanded = false
-                                    focusManager.moveFocus(FocusDirection.Down)
-                                }
-                            )
+                            DropdownMenuItem(text = { Text(zone) }, onClick = { mainZone = zone; expanded = false; focusManager.moveFocus(FocusDirection.Down) })
                         }
                     }
                 }
             } else {
+                // CAMPOS DE CONDUCTOR (TODOS OBLIGATORIOS)
+                OutlinedTextField(value = vehicleType, onValueChange = { vehicleType = onTextChange(it) }, label = { Text("Tipo de Vehículo*") }, modifier = Modifier.fillMaxWidth(), singleLine = true, keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next), keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }))
+                Spacer(Modifier.height(16.dp))
+
+                // NÚMERO DE TAXI (Solo numérico)
                 OutlinedTextField(
-                    value = phone, 
-                    onValueChange = { 
+                    value = taxiNumber,
+                    onValueChange = {
                         val text = onTextChange(it)
-                        phone = text 
-                        isPhoneError = !validatePhone(text)
-                    }, 
-                    label = { Text("Número de Teléfono") }, 
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, imeAction = ImeAction.Next),
-                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
-                    modifier = Modifier.fillMaxWidth(),
-                    isError = isPhoneError,
-                    singleLine = true
-                )
-                if (isPhoneError) {
-                    Text("El teléfono debe tener 10 dígitos.", color = MaterialTheme.colorScheme.error)
-                }
-                Spacer(Modifier.height(16.dp))
-                OutlinedTextField(
-                    value = vehicleType, 
-                    onValueChange = { vehicleType = onTextChange(it) }, 
-                    label = { Text("Tipo de Vehículo") }, 
+                        if (text.all { char -> char.isDigit() }) {
+                            taxiNumber = text
+                        }
+                    },
+                    label = { Text("Número de Taxi*") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
                     keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
                 )
                 Spacer(Modifier.height(16.dp))
-                OutlinedTextField(
-                    value = taxiNumber, 
-                    onValueChange = { taxiNumber = onTextChange(it) }, 
-                    label = { Text("Número de Taxi") }, 
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
-                )
-                Spacer(Modifier.height(16.dp))
-                OutlinedTextField(
-                    value = licensePlate, 
-                    onValueChange = { licensePlate = onTextChange(it) }, 
-                    label = { Text("Placa") }, 
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
-                )
+
+                OutlinedTextField(value = licensePlate, onValueChange = { licensePlate = onTextChange(it) }, label = { Text("Placa*") }, modifier = Modifier.fillMaxWidth(), singleLine = true, keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next), keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }))
             }
 
             Spacer(Modifier.height(16.dp))
-            OutlinedTextField(
-                value = password, 
-                onValueChange = { password = onTextChange(it) }, 
-                label = { Text("Contraseña") }, 
-                visualTransformation = PasswordVisualTransformation(), 
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
-            )
-            Spacer(Modifier.height(32.dp))
 
-            Button(
-                onClick = {
-                    val fullName = "$firstName $paternalLastName $maternalLastName"
-                    if (role == "passenger") {
-                        if (!isEmailError && mainZone.isNotEmpty()) {
-                            DataSource.registerPassenger(fullName, email, mainZone, password)
-                            onRegisterSuccess()
-                        }
-                    } else {
-                        if (!isPhoneError) {
-                            DataSource.registerDriver(fullName, phone, vehicleType, taxiNumber, licensePlate, password)
-                            onRegisterSuccess()
-                        }
-                    }
+            // 4. CAMPO DE NIP (OBLIGATORIO PARA AMBOS)
+            OutlinedTextField(
+                value = nip,
+                onValueChange = {
+                    val text = onTextChange(it)
+                    // ✅ CORRECCIÓN DE NIP: 6 dígitos
+                    if (text.length <= 6 && text.all { char -> char.isDigit() }) { nip = text }
+                    isNipError = text.length != 6 && text.isNotBlank() // Valida longitud de 6
                 },
+                label = { Text("NIP de Acceso* (6 dígitos)") }, // Actualiza etiqueta
+                visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword, imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+                modifier = Modifier.fillMaxWidth(), singleLine = true, isError = isNipError
+            )
+            if (isNipError && nip.isNotBlank()) {
+                Text("El NIP debe ser de 6 dígitos.", color = MaterialTheme.colorScheme.error)
+            }
+            Spacer(Modifier.height(24.dp))
+
+            // Mostrar Error de Registro (Teléfono Duplicado o Firebase)
+            registrationError?.let {
+                Text(
+                    text = it,
+                    color = Color.Red,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+
+            // ✅ BOTÓN REGISTRARSE (ASÍNCRONO)
+            Button(
+                onClick = { attemptRegistration() },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = if (role == "passenger") !isEmailError && mainZone.isNotEmpty() else !isPhoneError
+                enabled = !isLoading && isCurrentFormValid // Deshabilitar durante la carga
             ) {
-                Text("Registrarse")
+                if (isLoading) {
+                    // Mostrar indicador de progreso durante la llamada a Firebase
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = Color.White,
+                        strokeWidth = 3.dp
+                    )
+                } else {
+                    Text("Registrarse")
+                }
             }
         }
     }
